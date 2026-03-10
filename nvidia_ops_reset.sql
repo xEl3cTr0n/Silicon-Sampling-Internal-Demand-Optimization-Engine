@@ -3,8 +3,9 @@ AUTHOR: Aarha Khanna
 DESCRIPTION: SQL simulation of internal hardware supply chain to track H100/GPU demand across business units.
 */
 
--- RERUN-SAFE RESET
+-- RERUN-SAFE RESET (Updated to include Employees)
 DROP TABLE IF EXISTS Hardware_Requests;
+DROP TABLE IF EXISTS Employees;
 DROP TABLE IF EXISTS Products;
 DROP TABLE IF EXISTS Departments;
 
@@ -15,7 +16,17 @@ DROP TABLE IF EXISTS Departments;
 CREATE TABLE Departments (
     dept_id INT PRIMARY KEY,
     dept_name VARCHAR(50),
-    cost_center_code VARCHAR(20)
+    cost_center_code VARCHAR(20),
+    region VARCHAR(50) -- NEW: Tracks geographical locations
+);
+
+CREATE TABLE Employees ( -- NEW: Tracks the "requestor"
+    employee_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    title VARCHAR(50),
+    dept_id INT,
+    FOREIGN KEY (dept_id) REFERENCES Departments(dept_id)
 );
 
 CREATE TABLE Products (
@@ -35,18 +46,27 @@ CREATE TABLE Hardware_Requests (
     status VARCHAR(20),
     return_date DATE,
     FOREIGN KEY (dept_id) REFERENCES Departments(dept_id),
-    FOREIGN KEY (product_id) REFERENCES Products(product_id)
+    FOREIGN KEY (product_id) REFERENCES Products(product_id),
+    FOREIGN KEY (employee_id) REFERENCES Employees(employee_id) -- NEW: Link request to employee
 );
 
 -- ==========================================
 -- PHASE 2: DATA SIMULATION (The "NVIDIA Context")
 -- ==========================================
 
+-- NEW: Added Global Regions
 INSERT INTO Departments VALUES 
-(1, 'Deep Learning Research', 'AI-001'),
-(2, 'GeForce Driver Dev', 'GF-202'),
-(3, 'Omniverse Platform', 'OV-303'),
-(4, 'Automotive/Robotics', 'AU-404');
+(1, 'Deep Learning Research', 'AI-001', 'North America (Santa Clara)'),
+(2, 'GeForce Driver Dev', 'GF-202', 'APAC (Taipei)'),
+(3, 'Omniverse Platform', 'OV-303', 'EMEA (London)'),
+(4, 'Automotive/Robotics', 'AU-404', 'EMEA (Tel Aviv)');
+
+-- NEW: Added Employee Roster
+INSERT INTO Employees VALUES
+(501, 'Ada', 'Lovelace', 'Senior AI Researcher', 1),
+(502, 'David', 'Patterson', 'Lead Driver Engineer', 2),
+(503, 'Katherine', 'Johnson', 'Robotics Product Manager', 4),
+(504, 'John', 'Carmack', 'Omniverse Architect', 3);
 
 INSERT INTO Products VALUES 
 (101, 'NVIDIA H100 Tensor Core GPU', 'Data Center', 25000.00),
@@ -98,3 +118,20 @@ JOIN Products p ON r.product_id = p.product_id
 WHERE r.status = 'Fulfilled' 
 AND (JULIANDAY('now') - JULIANDAY(r.request_date)) > 60
 ORDER BY capital_tied_up DESC;
+
+-- ==========================================
+-- PHASE 4: FULL TABLE VALIDATION
+-- ==========================================
+-- Goal: Display the raw underlying data tables on execution
+
+-- .print '--- DEPARTMENTS TABLE ---'
+SELECT * FROM Departments;
+
+-- .print '--- EMPLOYEES TABLE ---'
+SELECT * FROM Employees;
+
+-- .print '--- PRODUCTS TABLE ---'
+SELECT * FROM Products;
+
+-- .print '--- HARDWARE REQUESTS TABLE ---'
+SELECT * FROM Hardware_Requests;
