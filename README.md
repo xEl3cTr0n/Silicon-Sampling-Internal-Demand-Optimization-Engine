@@ -2,6 +2,14 @@
 Understanding Supply Chain, SQL Analytics, and Cost Optimization
 # NVIDIA Internal Sampling & Demand Optimization (SQL)
 
+## Project Overview
+This project simulates NVIDIA’s internal hardware supply chain and tracks high-value asset demand across global departments and individual requestors.
+
+## Key Features
+- Relational schema for Departments (with regions), Employees (requestors), Products, and Hardware Requests.
+- Cost analysis by department and product family.
+- Stagnant inventory report for fulfilled requests held longer than 60 days (fixed report date for stable snapshots; switch to `DATE('now')` for live values).
+
 ## Run In VSCode (Visual Table Output)
 
 Recommended setup using the `SQLite` VSCode extension by `alexcvzz`.

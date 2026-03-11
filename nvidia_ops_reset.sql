@@ -85,10 +85,11 @@ INSERT INTO Hardware_Requests VALUES
 -- PHASE 3: ANALYTICAL QUERIES (The Insights)
 -- ==========================================
 
--- Query A: Cost Analysis by Department
+-- Query A: Cost Analysis by Department & Region
 -- Goal: Identify which business units are driving the highest internal costs.
 SELECT 
     d.dept_name,
+    d.region,
     p.product_family,
     COUNT(r.request_id) as total_requests,
     SUM(r.quantity_requested) as total_units_needed,
@@ -105,18 +106,24 @@ ORDER BY total_internal_cost DESC;
 -- Query B: Stagnant Inventory Report
 -- Goal: Find expensive hardware held longer than 60 days to improve circulation.
 -- (Note: Using SQLite syntax for date; if using MySQL, use DATEDIFF)
+-- Stable snapshot date for reproducible results (update as needed).
+-- If you want live/updating values, replace params.report_date with DATE('now').
+WITH params AS (SELECT DATE('2026-03-11') AS report_date)
 SELECT 
     r.request_id,
     d.dept_name,
+    e.first_name || ' ' || e.last_name as requestor,
     p.product_name,
     r.quantity_requested,
-    (JULIANDAY('now') - JULIANDAY(r.request_date)) as days_held,
+    (JULIANDAY(params.report_date) - JULIANDAY(r.request_date)) as days_held,
     (r.quantity_requested * p.unit_cost) as capital_tied_up
 FROM Hardware_Requests r
 JOIN Departments d ON r.dept_id = d.dept_id
+JOIN Employees e ON r.employee_id = e.employee_id
 JOIN Products p ON r.product_id = p.product_id
+JOIN params
 WHERE r.status = 'Fulfilled' 
-AND (JULIANDAY('now') - JULIANDAY(r.request_date)) > 60
+AND (JULIANDAY(params.report_date) - JULIANDAY(r.request_date)) > 60
 ORDER BY capital_tied_up DESC;
 
 -- ==========================================
